@@ -1,25 +1,27 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { ErrorResponse, Task, UseTasksReturn } from "../types/taskTypes";
-import { getToken } from "../utils/token";
+import { Config } from "../config";
+import useToken from "./useToken";
+import { toast } from "react-toastify";
 
 const useTasks = (): UseTasksReturn => {
+  const { token } = useToken();
+  const API_URL_TASK = Config.API_URL + "/api/tasks";
+  const [filter, setFilter] = useState<"completed" | "pending" | "all">("all");
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-  const API_URL_TASK = API_URL + "/api/tasks";
-  const token = getToken();
-
-  const fetchTasks = async (filter?: "completed" | "pending") => {
+  const fetchTasks = async () => {
     setLoading(true);
     setError(null);
 
     try {
       const response = await axios.get(API_URL_TASK, {
-        params: filter ? { completed: filter === "completed" } : {},
+        params: filter != "all" ? { completed: filter === "completed" } : {},
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -53,16 +55,21 @@ const useTasks = (): UseTasksReturn => {
     }
   };
 
-  const createTask = async (taskData: Omit<Task, "id" | "createdAt">) => {
+  const createTask = async (taskData: Omit<Task, "_id" | "createdAt">) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await axios.post(API_URL_TASK, taskData, {
+      await axios.post(API_URL_TASK, taskData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setTasks((prevTasks) => [...prevTasks, response.data]);
+      fetchTasks();
+      toast.success("¡Tarea creada!", {
+        position: "bottom-center",
+        autoClose: 3000,
+        closeOnClick: true,
+      });
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
 
@@ -77,14 +84,18 @@ const useTasks = (): UseTasksReturn => {
     setError(null);
 
     try {
-      const response = await axios.put(`${API_URL_TASK}/${id}`, updatedData, {
+      await axios.put(`${API_URL_TASK}/${id}`, updatedData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      setTasks((prevTasks) =>
-        prevTasks.map((task) => (task.id === id ? response.data : task))
-      );
+
+      fetchTasks();
+      toast.success("¡Tarea actualizada!", {
+        position: "bottom-center",
+        autoClose: 3000,
+        closeOnClick: true,
+      });
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
 
@@ -105,7 +116,12 @@ const useTasks = (): UseTasksReturn => {
         },
       });
 
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+      setTasks((prevTasks) => prevTasks.filter((task) => task._id !== id));
+      toast.success("¡Tarea eliminada!", {
+        position: "bottom-center",
+        autoClose: 3000,
+        closeOnClick: true,
+      });
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
 
@@ -117,13 +133,15 @@ const useTasks = (): UseTasksReturn => {
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [filter]);
 
   return {
     tasks,
     task,
     loading,
     error,
+    filter,
+    setFilter,
     fetchTasks,
     fetchTaskById,
     createTask,

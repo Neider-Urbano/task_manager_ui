@@ -1,78 +1,82 @@
-import { useState } from "react";
-import useTasks from "../hooks/useTask";
+import TaskCard from "./TaskCard";
+import { Task } from "../types/taskTypes";
+import { Button, Spinner } from "@nextui-org/react";
 
-const TaskList = () => {
-  const { tasks, loading, error, updateTask, deleteTask } = useTasks();
-  const [filter, setFilter] = useState<string>("all");
+interface TaskListProps {
+  tasks: Task[];
+  loading: boolean;
+  onDeleteTask: (id: string) => void;
+  onSetFilter: (filter: "completed" | "pending" | "all") => void;
+  onUpdateTask: (id: string, updatedData: Partial<Task>) => void;
+}
 
-  const handleCompleteToggle = (taskId: string, currentStatus: boolean) => {
-    updateTask(taskId, { completed: !currentStatus });
-  };
-
-  const filteredTasks = tasks.filter((task) => {
-    if (filter === "completed") return task.completed;
-    if (filter === "pending") return !task.completed;
-    return true;
-  });
-
-  if (loading) return <p>Cargando tareas...</p>;
-  if (error) return <p>{error}</p>;
-
+const TaskList: React.FC<TaskListProps> = ({
+  tasks,
+  onDeleteTask,
+  onUpdateTask,
+  loading,
+  onSetFilter,
+}) => {
   return (
-    <div className="w-full max-w-3xl mx-auto mt-6">
-      <div className="flex justify-between mb-4">
-        <h2 className="text-2xl font-bold">Lista de Tareas</h2>
-        <div>
-          <button
-            onClick={() => setFilter("all")}
-            className="mr-2 bg-gray-300 py-1 px-3 rounded-md hover:bg-gray-400"
+    <div className="w-full max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">📋 Lista de Tareas</h2>
+
+        <div className="flex gap-2">
+          <Button
+            onClick={() => onSetFilter("all")}
+            variant="flat"
+            color="primary"
+            isIconOnly={false}
           >
             Todas
-          </button>
-          <button
-            onClick={() => setFilter("completed")}
-            className="mr-2 bg-green-300 py-1 px-3 rounded-md hover:bg-green-400"
+          </Button>
+
+          <Button
+            onClick={() => onSetFilter("completed")}
+            variant="flat"
+            color="success"
+            isIconOnly={false}
           >
             Completadas
-          </button>
-          <button
-            onClick={() => setFilter("pending")}
-            className="bg-red-300 py-1 px-3 rounded-md hover:bg-red-400"
+          </Button>
+
+          <Button
+            onClick={() => onSetFilter("pending")}
+            variant="flat"
+            color="warning"
+            isIconOnly={false}
           >
             Pendientes
-          </button>
+          </Button>
         </div>
       </div>
-      <ul className="space-y-4">
-        {filteredTasks.map((task) => (
-          <li key={task.id} className="bg-white shadow-md rounded p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-xl font-semibold">{task.title}</h3>
-                <p className="text-sm text-gray-600">
-                  Creada el: {new Date(task.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => handleCompleteToggle(task.id, task.completed)}
-                  className={`py-1 px-3 rounded-md ${
-                    task.completed ? "bg-green-500" : "bg-gray-500"
-                  } text-white`}
-                >
-                  {task.completed ? "Marcar Pendiente" : "Marcar Completada"}
-                </button>
-                <button
-                  onClick={() => deleteTask(task.id)}
-                  className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600"
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+
+      {loading && (
+        <div className="flex justify-center items-center py-10">
+          <Spinner size="lg" color="primary" />
+          <p className="ml-4 text-lg font-medium text-gray-600">Cargando...</p>
+        </div>
+      )}
+
+      {!loading && tasks.length === 0 ? (
+        <div className="flex flex-col items-center py-10">
+          <p className="text-lg text-gray-500 font-medium">
+            🚀 No hay tareas para mostrar
+          </p>
+        </div>
+      ) : (
+        <ul className="space-y-4">
+          {tasks.map((task) => (
+            <TaskCard
+              task={task}
+              key={task._id}
+              onDeleteTask={onDeleteTask}
+              onUpdateTask={onUpdateTask}
+            />
+          ))}
+        </ul>
+      )}
     </div>
   );
 };

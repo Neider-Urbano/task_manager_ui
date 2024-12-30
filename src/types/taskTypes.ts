@@ -1,5 +1,5 @@
 export interface Task {
-  id: string;
+  _id: string;
   title: string;
   description?: string;
   completed: boolean;
@@ -11,9 +11,11 @@ export interface UseTasksReturn {
   task: Task | null;
   loading: boolean;
   error: string | null;
-  fetchTasks: (filter?: "completed" | "pending") => Promise<void>;
+  filter: string;
+  setFilter: (filter: "completed" | "pending" | "all") => void;
+  fetchTasks: () => Promise<void>;
   fetchTaskById: (id: string) => Promise<void>;
-  createTask: (taskData: Omit<Task, "id" | "createdAt">) => Promise<void>;
+  createTask: (taskData: Omit<Task, "_id" | "createdAt">) => Promise<void>;
   updateTask: (id: string, updatedData: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
 }

@@ -8,7 +8,7 @@ Task Manager es una aplicación de gestión de tareas que permite a los usuarios
 
 Puedes acceder a la aplicación desplegada en Vercel en el siguiente enlace:
 
-[**Enlace a la aplicación desplegada**](https://tu-enlace-desplegado.com)
+[**Enlace a la aplicación desplegada**](https://task-manager-ui-seven.vercel.app/)
 
 ## Tecnologías usadas
 
